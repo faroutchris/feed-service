@@ -7,6 +7,9 @@ defmodule Demeter.Supervisor do
 
   def init(:ok) do
     children = [
+      # Start the ecto repo
+      Demeter.Repo,
+      # Start the scheduler
       Demeter.Scheduler
     ]
 
