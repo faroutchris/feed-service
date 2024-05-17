@@ -25,8 +25,8 @@ defmodule Demeter.MixProject do
     [
       {:ecto_sql, "~> 3.0"},
       {:postgrex, ">= 0.0.0"},
-      {:dotenvy, "~> 0.8.0"}
-
+      {:dotenvy, "~> 0.8.0"},
+      {:gluttony, "~> 0.2.0"}
       # {:dep_from_git, git: "https://github.com/elixir-lang/my_dep.git", tag: "0.1.0"}
     ]
   end

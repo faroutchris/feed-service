@@ -9,6 +9,8 @@ defmodule Demeter.Supervisor do
     children = [
       # Start the ecto repo
       Demeter.Repo,
+      # Start the task supervisor
+      {Task.Supervisor, name: Demeter.TaskSupervisor},
       # Start the scheduler
       Demeter.Scheduler
     ]

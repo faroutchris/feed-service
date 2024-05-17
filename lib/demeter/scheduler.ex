@@ -1,15 +1,16 @@
 defmodule Demeter.Scheduler do
+  alias Demeter.FeedService
   use GenServer
 
-  # 5 seconds
-  @interval 5 * 1000
+  # 60 seconds
+  @interval 60 * 1000
 
   def start_link(_opts) do
     GenServer.start_link(__MODULE__, %{}, name: __MODULE__)
   end
 
   def init(state) do
-    run_scheduled_task()
+    FeedService.update_feeds()
 
     schedule_next_update()
 
@@ -21,23 +22,29 @@ defmodule Demeter.Scheduler do
     Process.send_after(self(), :update, @interval)
   end
 
-  def run_scheduled_task do
-    feeds = [%{url: "http://www.google.com"}, %{url: "http://www.google2.com"}]
-
-    Demeter.Worker.spawn(feeds, self())
-  end
-
   def handle_info(:update, state) do
-    run_scheduled_task()
+    FeedService.update_feeds()
 
     schedule_next_update()
 
     {:noreply, state}
   end
 
-  def handle_info({:ok, feed_url}, state) do
-    IO.puts("spawned worker and returned ok with #{feed_url}")
+  # def handle_info({:ok, _data}, state) do
+  #   # IO.puts("spawned worker and returned ok with #{feed_url}")
 
-    {:noreply, state}
-  end
+  #   {:noreply, state}
+  # end
+
+  # def handle_info({:not_modified, _data}, state) do
+  #   # IO.puts("spawned worker and returned ok with #{feed_url}")
+
+  #   {:noreply, state}
+  # end
+
+  # def handle_info({:error, _reason}, state) do
+  #   # IO.puts("spawned worker and returned ok with #{feed_url}")
+
+  #   {:noreply, state}
+  # end
 end
