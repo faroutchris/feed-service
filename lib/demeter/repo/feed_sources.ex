@@ -1,4 +1,4 @@
-defmodule Demeter.Repo.FeedSources do
+defmodule Demeter.Repo.FeedSourcesRepo do
   import Ecto.Query, warn: false
   alias Demeter.Repo.FeedSources
   alias Demeter.FeedSources

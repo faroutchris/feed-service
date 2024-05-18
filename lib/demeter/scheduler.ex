@@ -1,5 +1,5 @@
 defmodule Demeter.Scheduler do
-  alias Demeter.FeedService
+  alias Demeter.IngestService
   use GenServer
 
   # 60 seconds
@@ -10,7 +10,7 @@ defmodule Demeter.Scheduler do
   end
 
   def init(state) do
-    FeedService.update_feeds()
+    # FeedService.update_feeds()
 
     schedule_next_update()
 
@@ -23,28 +23,10 @@ defmodule Demeter.Scheduler do
   end
 
   def handle_info(:update, state) do
-    FeedService.update_feeds()
+    # FeedService.update_feeds()
 
     schedule_next_update()
 
     {:noreply, state}
   end
-
-  # def handle_info({:ok, _data}, state) do
-  #   # IO.puts("spawned worker and returned ok with #{feed_url}")
-
-  #   {:noreply, state}
-  # end
-
-  # def handle_info({:not_modified, _data}, state) do
-  #   # IO.puts("spawned worker and returned ok with #{feed_url}")
-
-  #   {:noreply, state}
-  # end
-
-  # def handle_info({:error, _reason}, state) do
-  #   # IO.puts("spawned worker and returned ok with #{feed_url}")
-
-  #   {:noreply, state}
-  # end
 end
