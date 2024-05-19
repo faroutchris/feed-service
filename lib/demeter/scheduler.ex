@@ -1,5 +1,4 @@
 defmodule Demeter.Scheduler do
-  alias Demeter.IngestService
   use GenServer
 
   # 60 seconds

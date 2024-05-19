@@ -24,9 +24,9 @@ defmodule Demeter.FetchWorker do
       {:ok, feed_source, %HTTPoison.Response{...}}
   """
 
-  alias Demeter.FeedSources
+  alias Demeter.Feed
 
-  def fetch_feed(%FeedSources{} = feed_source) do
+  def fetch_feed(%Feed{} = feed_source) do
     IO.inspect(feed_source.url)
 
     headers =
@@ -36,7 +36,8 @@ defmodule Demeter.FetchWorker do
 
     with {:ok, response} <-
            HTTPoison.get(feed_source.url, headers),
-         :modified <- check_is_modified(response, feed_source) do
+         :modified <-
+           check_is_modified(response, feed_source) do
       {:ok, feed_source, response}
     else
       :not_modified -> {:not_modified, feed_source}
@@ -44,9 +45,9 @@ defmodule Demeter.FetchWorker do
     end
   end
 
-  defp check_is_modified(%HTTPoison.Response{} = response, %FeedSources{} = feed_source) do
-    response_etag = extract_header("ETag", response)
-    response_last_modified = extract_header("Last-Modified", response)
+  defp check_is_modified(%HTTPoison.Response{} = response, %Feed{} = feed_source) do
+    response_etag = extract_header("etag", response)
+    response_last_modified = extract_header("last-modified", response)
 
     cond do
       response.status_code == 304 -> :not_modified
@@ -69,7 +70,10 @@ defmodule Demeter.FetchWorker do
   end
 
   defp extract_header(header_name, %HTTPoison.Response{} = response) do
-    enum_headers = Enum.into(response.headers, %{})
-    enum_headers[header_name]
+    Enum.map(response.headers, fn {header, value} ->
+      {String.downcase(header, :default), value}
+    end)
+    |> Enum.into(%{})
+    |> Map.get(header_name)
   end
 end
