@@ -34,9 +34,16 @@ defmodule Demeter.Feed do
       :last_modified,
       :next_fetch,
       :title,
-      :url,
-      :description
+      :description,
+      :links,
+      :updated,
+      :authors,
+      :contributors,
+      :language,
+      :icon,
+      :logo,
+      :copyright
     ])
-    |> Ecto.Changeset.validate_required([:url, :title, :description])
+    |> Ecto.Changeset.validate_required([:url, :title])
   end
 end
