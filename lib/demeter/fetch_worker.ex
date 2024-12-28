@@ -18,8 +18,7 @@ defmodule Demeter.FetchWorker do
   - **Error**:
     - Returns `{:error, reason}` indicating an error occurred during the request.
 
-  ## Example
-
+  ## Example:
       iex> Demeter.FetcherWorker.fetch_feed(feed_source)
       {:ok, feed_source, %HTTPoison.Response{...}}
   """
