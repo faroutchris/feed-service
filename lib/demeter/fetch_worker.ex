@@ -24,14 +24,15 @@ defmodule Demeter.FetchWorker do
   """
 
   alias Demeter.Feed
+  alias Demeter.HttpUtils
 
   def fetch_feed(%Feed{} = feed_source) do
     IO.inspect(feed_source.url)
 
     headers =
       %{}
-      |> make_headers("If-Modified-Since", feed_source.last_modified)
-      |> make_headers("If-None-Match", feed_source.etag)
+      |> HttpUtils.make_headers("If-Modified-Since", feed_source.last_modified)
+      |> HttpUtils.make_headers("If-None-Match", feed_source.etag)
 
     with {:ok, response} <- HTTPoison.get(feed_source.url, headers),
          :modified <- check_is_modified(response, feed_source) do
@@ -43,34 +44,14 @@ defmodule Demeter.FetchWorker do
   end
 
   defp check_is_modified(%HTTPoison.Response{} = response, %Feed{} = feed_source) do
-    response_etag = extract_header("etag", response)
-    response_last_modified = extract_header("last-modified", response)
+    response_etag = HttpUtils.extract_header("etag", response)
+    response_last_modified = HttpUtils.extract_header("last-modified", response)
 
     cond do
       response.status_code == 304 -> :not_modified
-      matching_headers?(response_last_modified, feed_source.last_modified) -> :not_modified
-      matching_headers?(response_etag, feed_source.etag) -> :not_modified
+      HttpUtils.matching_headers?(response_last_modified, feed_source.last_modified) -> :not_modified
+      HttpUtils.matching_headers?(response_etag, feed_source.etag) -> :not_modified
       true -> :modified
     end
-  end
-
-  defp matching_headers?(header, value) do
-    not is_nil(value) and header == value
-  end
-
-  defp make_headers(%{} = headers, name, value) do
-    if value != nil do
-      Map.put(headers, name, value)
-    else
-      headers
-    end
-  end
-
-  defp extract_header(header_name, %HTTPoison.Response{} = response) do
-    Enum.map(response.headers, fn {header, value} ->
-      {String.downcase(header, :default), value}
-    end)
-    |> Enum.into(%{})
-    |> Map.get(header_name)
   end
 end

@@ -39,19 +39,16 @@ defmodule Demeter.IngestService do
   alias Demeter.Feed
   alias Demeter.Repo.Feeds
   alias Demeter.FetchWorker
+  alias Demeter.HttpUtils
 
   @http_timeout 30_000
   @parse_timeout 30_000
 
   def update_feeds do
-    # Feeds.list(:due_for_update)
-    Feeds.list()
+    Feeds.list(:due_for_update)
     |> Stream.map(&Task.async(fn -> update_pipeline(&1) end))
     |> Stream.map(&Task.await(&1))
     |> Enum.to_list()
-
-    # Current implementation saves each feed into db
-    # refactor to return a collection and run a ecto.multi transaction
   end
 
   def save_feed(changeset) do
@@ -62,8 +59,10 @@ defmodule Demeter.IngestService do
     with {:ok, %Feed{} = feed_source, %HTTPoison.Response{} = response} <- get_feed(feed_source),
          {:ok, %{feed: feed, entries: entries}} <- parse_feed(response),
          {:ok, %Ecto.Changeset{} = changeset} <- update_feed_data(feed_source, feed, entries, response) do
+      # refactor to return the changeset to the worker
       save_feed(changeset)
     else
+      # Here we need to renew the last_updated timestamp
       {:not_modified, %Feed{} = feed} -> IO.puts("#{feed.url} has not been modified")
       error -> error
     end
@@ -76,6 +75,7 @@ defmodule Demeter.IngestService do
     end
   end
 
+  # Move to ecto
   defp map_entry(gluttony_entry) do
     IO.inspect(
       %{
@@ -126,8 +126,8 @@ defmodule Demeter.IngestService do
       |> Demeter.Feed.changeset(%{
         title: Map.get(gluttony_feed, :title),
         description: Map.get(gluttony_feed, :description),
-        etag: extract_header("etag", response),
-        last_modified: extract_header("last-modified", response),
+        etag: HttpUtils.extract_header("etag", response),
+        last_modified: HttpUtils.extract_header("last-modified", response),
         next_fetch: calculate_next(response),
         updated: Map.get(gluttony_feed, :updated),
         authors: Map.get(gluttony_feed, :author),
@@ -154,21 +154,6 @@ defmodule Demeter.IngestService do
       Gluttony.parse_string(response.body)
     end)
     |> Task.await(@parse_timeout)
-  end
-
-  def get_favicon do
-    # TODO
-    # {:ok, favicon}
-    # {:continue, nil}
-  end
-
-  # Create a HTTPUtils module
-  defp extract_header(header_name, %HTTPoison.Response{} = response) do
-    Enum.map(response.headers, fn {header, value} ->
-      {String.downcase(header, :default), value}
-    end)
-    |> Enum.into(%{})
-    |> Map.get(header_name)
   end
 
   defp calculate_next(%HTTPoison.Response{} = _response) do

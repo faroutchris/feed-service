@@ -4,7 +4,7 @@ defmodule Demeter.Repo.Feeds do
   alias Demeter.Repo
 
   # @time_limit 60 * 60
-  @time_limit 1
+  @time_limit 60 * 60
 
   def list do
     Repo.all(Feed)
